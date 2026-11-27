@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="/dashboard/favicon.png?v=6" type="image/png" sizes="48x48">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=6">
+<title>EZText · Кабинет API</title>
+<meta name="theme-color" content="#f3f4f8">
+<style>
+:root{color-scheme:light;font:15px/1.5 "Inter",system-ui,sans-serif;background:#f3f4f8;color:#181c31;--muted:#566079;--line:#dce0ea;--mint:#b2f5d5;--purple:#513da1;--night:#15132d}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body,h1,h2,p,pre{margin:0}
+a{color:var(--purple)}
+a:hover{text-decoration:underline}
+header{background:#fff;border-bottom:1px solid var(--line)}
+.top,main{width:min(1152px,calc(100% - 60px));margin:auto}
+.top{display:flex;align-items:center;justify-content:space-between;gap:20px;min-height:74px}
+.logo{color:inherit;display:flex;align-items:center;gap:12px;text-decoration:none;font-size:23px;font-weight:800;letter-spacing:-.05em}
+.mark{display:grid;place-items:center;width:37px;height:37px;border-radius:11px;background:#232044;color:var(--mint);font-size:24px}
+nav{display:flex;gap:26px}
+nav a,.telegram{color:#343850;text-decoration:none;font-size:13px;font-weight:670}
+.telegram{border:1px solid var(--line);border-radius:9px;padding:8px 13px;white-space:nowrap}
+main{padding:28px 0 50px}
+.hero{isolation:isolate;position:relative;overflow:hidden;display:flex;align-items:center;min-height:322px;padding:clamp(24px,5vw,53px);border-radius:22px;background:var(--night);color:#fff;margin-bottom:23px}
+.hero-art{position:absolute;z-index:-2;right:0;top:0;width:57%;height:100%;object-fit:cover;object-position:center}
+.hero::after{content:"";position:absolute;z-index:-1;inset:0;background:linear-gradient(90deg,var(--night) 29%,#15132de8 43%,transparent 72%)}
+.hero-content{width:min(100%,500px)}
+h1{font-size:clamp(42px,6vw,70px);line-height:1.04;letter-spacing:-.075em}
+.hero p{color:#d8d3ea;margin-top:13px;max-width:420px}
+.endpoint{margin-top:27px;max-width:max-content;display:flex;flex-wrap:wrap;align-items:center;gap:7px 16px;border:1px solid #ffffff32;background:#ffffff14;border-radius:11px;padding:8px 9px 8px 12px}
+.endpoint code{color:var(--mint);overflow-wrap:anywhere}
+.endpoint button{background:#ffffff19;color:#fff;border-color:#ffffff30}
+.grid{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:18px;align-items:start}
+.stack{display:grid;gap:18px}
+.card{background:white;border:1px solid var(--line);padding:clamp(17px,3vw,25px);border-radius:15px;min-width:0;box-shadow:0 2px 3px #26234a06}
+h2{font-size:21px;letter-spacing:-.035em}
+p{color:var(--muted)}
+.card h2+p,.card>p{margin-top:7px}
+.row{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.split{justify-content:space-between}
+label{display:block;font-weight:690;font-size:13px;margin:16px 0 6px}
+input,select,button{font:inherit;color:inherit;border:1px solid #ccd1df;border-radius:8px;background:#f6f7fb;padding:9px 12px;max-width:100%}
+input[type=password]{width:100%}
+button{cursor:pointer;font-size:13px;font-weight:700}
+button:hover{border-color:#856ed2}
+button:disabled{opacity:.55;cursor:default}
+.primary{background:#4b368e;border-color:#4b368e;color:white}
+.primary:hover{background:#36236e}
+:focus-visible{outline:2px solid #8864df;outline-offset:3px}
+.actions{margin-top:11px}
+#account{margin-top:16px;padding:13px 15px;border-radius:10px;background:#ecf9f2;color:#184632}
+.meter{font-size:38px;line-height:1.13;font-weight:760;letter-spacing:-.055em;font-variant-numeric:tabular-nums}
+#status:empty,#ocr-status:empty{display:none}
+#status,#ocr-status{margin-top:9px}
+#history-empty{margin-top:15px;padding:29px 15px;border:1px dashed #d5d8e6;border-radius:10px;background:#f8f8fc;text-align:center}
+.table-scroll{overflow:auto}
+table{width:100%;border-collapse:collapse;white-space:nowrap;font-size:13px;margin-top:12px}
+th,td{padding:11px 8px;border-bottom:1px solid var(--line);text-align:left}
+th{color:var(--muted);font-weight:600}
+code,pre{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:13px}
+code{color:#4b368e}
+pre{overflow:auto;background:#1d1a37;border-radius:10px;padding:15px;white-space:pre-wrap;overflow-wrap:anywhere;color:#e2d9ff}
+.documentation{margin-top:18px}
+.documentation pre,#ocr-result{margin-top:13px}
+.routes{padding:0;list-style:none;margin:13px 0 0;display:grid;gap:6px;color:var(--muted)}
+@media(max-width:740px){.grid{grid-template-columns:1fr}.top,main{width:calc(100% - 28px)}main{padding-top:15px}.hero{align-items:end;min-height:350px}.hero-art{width:100%;height:76%;object-position:center 39%}.hero::after{background:linear-gradient(0deg,var(--night) 12%,#15132df0 31%,transparent 83%)}.hero p{max-width:270px}}
+@media(max-width:500px){nav{display:none}.top{min-height:60px}.hero{border-radius:15px}.endpoint{margin-top:17px}}
+</style>
+</head>
+<body>
+<header><div class="top">
+<a class="logo" href="/dashboard/"><img class="mark" src="/favicon.svg?v=6" alt="" width="37" height="37">EZText</a>
+<nav aria-label="Навигация"><a href="https://eztextconnect.noip.at/">Подключение</a><a href="https://eztext.noip.at/docs/">Документация</a></nav>
+<a class="telegram" href="https://t.me/eztextbot">Открыть Telegram ↗</a>
+</div></header>
+<main>
+<section class="hero">
+<img class="hero-art" src="/dashboard/cover.jpg" alt="" width="1100" height="733" fetchpriority="high">
+<div class="hero-content">
+<h1>Кабинет API</h1><p>Распознавайте текст с фото через API и следите за расходом запросов.</p>
+<div class="endpoint"><code id="api-url" aria-label="Базовый адрес API"></code><button type="button" id="copy-url">Копировать</button></div>
+</div>
+</section>
+<div class="grid">
+<div class="stack">
+<section class="card" id="connect">
+<h2>Подключение</h2>
+<p>Получите ключ командой <code>/key</code> в <a href="https://t.me/eztextbot">@eztextbot</a>.</p>
+<form id="auth">
+<label for="key">API-ключ</label><input id="key" type="password" placeholder="ts_…" autocomplete="off" spellcheck="false" required>
+<div class="row actions"><button type="submit" class="primary">Подключиться</button><button type="button" id="logout" hidden>Выйти</button></div>
+</form>
+<p id="status" role="status"></p>
+<div id="account" hidden><p>Доступно запросов</p><div class="meter" id="credits"></div><p id="credit-breakdown"></p></div>
+</section>
+<section class="card" id="test" hidden>
+<h2>Тест распознавания</h2>
+<p>Обработка снимка расходует один запрос.</p>
+<form id="ocr">
+<label for="image">JPEG, PNG или WebP до 5 МБ</label>
+<input id="image" type="file" accept="image/jpeg,image/png,image/webp" required>
+<div class="row actions"><select id="language" aria-label="Язык">
+<option value="rus+eng">Русский и английский</option><option value="rus">Русский</option><option value="eng">Английский</option>
+</select><button class="primary" type="submit">Распознать</button></div>
+</form>
+<p id="ocr-status" role="status"></p><pre id="ocr-result" hidden></pre>
+</section>
+</div>
+<section class="card">
+<div class="row split"><h2>История запросов</h2><button type="button" id="refresh" hidden>Обновить</button></div>
+<p id="history-empty">Подключите ключ, чтобы увидеть историю.</p>
+<div class="table-scroll"><table id="history" hidden><thead><tr><th>Время</th><th>Источник</th><th>Статус</th><th>Язык</th><th>Время OCR</th></tr></thead><tbody></tbody></table></div>
+</section>
+</div>
+<section class="card documentation" id="docs">
+<div class="row split"><h2>Быстрый старт</h2><a href="https://eztext.noip.at/docs/">Вся документация ↗</a><button type="button" id="copy-example">Копировать cURL</button><button type="button" id="copy-with-key" class="primary" hidden>Скопировать запрос с ключом</button></div>
+<p>Выберите фото в «Тесте распознавания», и его имя появится в команде. Запускайте команду из папки с фото.</p>
+<pre id="example"></pre>
+<ul class="routes">
+<li><code>GET /api/v1/balance</code> — остаток запросов</li>
+<li><code>GET /api/v1/history</code> — до 100 последних запросов</li>
+</ul>
+</section>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const base = new URL('/api/', location.origin);
+let currentKey = '';
+let generation = 0;
+let signedIn = false;
+function curlExample() {
+  const file = $('image').files[0]?.name || 'photo.png';
+  const filename = './' + file.replace(/["\\]/g, '\\$&');
+  const field = 'image=@"' + filename + '"';
+  const quotedField = "'" + field.replaceAll("'", "'\\''") + "'";
+  return 'curl https://eztext.noip.at/api/v1/ocr -H "Authorization: Bearer $EZTEXT_API_KEY" -F ' + quotedField;
+}
+function updateExample() {
+  $('example').textContent = curlExample();
+}
+$('image').addEventListener('change', updateExample);
+updateExample();
+$('api-url').textContent = 'https://eztext.noip.at/api';
+$('copy-with-key').onclick = async () => {
+  if (!signedIn || !currentKey) return;
+  const button = $('copy-with-key');
+  const command = $('example').textContent.replace('$EZTEXT_API_KEY', currentKey);
+  try {
+    await navigator.clipboard.writeText(command);
+    button.textContent = 'Запрос скопирован';
+  } catch {
+    button.textContent = 'Не удалось скопировать';
+  }
+  setTimeout(() => { button.textContent = 'Скопировать запрос с ключом'; }, 1800);
+};
+for (const [buttonId, sourceId] of [['copy-url','api-url'], ['copy-example','example']]) {
+  const button = $(buttonId);
+  const label = button.textContent;
+  button.onclick = async () => {
+    try {
+      await navigator.clipboard.writeText($(sourceId).textContent);
+      button.textContent = 'Скопировано';
+    } catch {
+      button.textContent = 'Выделите текст вручную';
+    }
+    setTimeout(() => { button.textContent = label; }, 1800);
+  };
+}
+async function api(path, key, options={}) {
+  const res = await fetch(new URL(path,base), {
+    ...options, cache:'no-store', redirect:'error',
+    headers:{...options.headers, Authorization:'Bearer '+key}
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    const error = new Error(data.error || 'HTTP '+res.status);
+    error.status = res.status;
+    throw error;
+  }
+  return data;
+}
+function show(signed) {
+  signedIn = signed;
+  for (const id of ['account','test','logout','refresh','copy-with-key']) $(id).hidden = !signed;
+  if (!signed) {
+    $('history').hidden = true;
+    $('history-empty').hidden = false;
+    $('history-empty').textContent = 'Подключите ключ, чтобы увидеть свои запросы.';
+    $('history').tBodies[0].replaceChildren();
+    $('ocr-result').hidden = true;
+    $('ocr-result').textContent = '';
+    $('ocr-status').textContent = '';
+  }
+}
+function renderHistory(entries) {
+  const body = $('history').tBodies[0];
+  body.replaceChildren();
+  for (const entry of entries) {
+    const row = body.insertRow();
+    for (const value of [new Date(entry.at*1000).toLocaleString('ru-RU'), entry.source === 'telegram' ? 'Telegram' : 'API', entry.status, entry.language, entry.duration_ms+' мс']) {
+      row.insertCell().textContent = value;
+    }
+  }
+  $('history').hidden = !entries.length;
+  $('history-empty').hidden = Boolean(entries.length);
+  $('history-empty').textContent = 'Запросов пока нет. Новые появятся после распознавания в Telegram или через API.';
+}
+async function refresh() {
+  const active = generation;
+  const key = currentKey;
+  try {
+    const balance = await api('v1/balance',key);
+    if (active !== generation) return;
+    const history = await api('v1/history',key);
+    if (active !== generation) return;
+    $('credits').textContent = (balance.free + balance.credits).toLocaleString('ru-RU');
+    $('credit-breakdown').textContent = `Бесплатных: ${balance.free} · Платных: ${balance.credits}`;
+    renderHistory(history.requests);
+    $('status').textContent = 'Ключ подключён';
+    show(true);
+  } catch (error) {
+    if (active !== generation) return;
+    if (error.status === 401) {
+      generation++;
+      currentKey = '';
+      show(false);
+      $('status').textContent = 'Ключ больше не действует или введён с ошибкой. Вставьте последний ключ из Telegram. Команда /key создаёт новый ключ.';
+    } else {
+      $('status').textContent = error.message;
+      if (!signedIn) currentKey = '';
+    }
+  }
+}
+$('auth').onsubmit = event => {
+  event.preventDefault();
+  generation++;
+  show(false);
+  const keys = $('key').value.match(/(?<![A-Za-z0-9_-])ts_[A-Za-z0-9_-]{43}(?![A-Za-z0-9_-])/g);
+  if (keys?.length !== 1) {
+    currentKey = '';
+    $('status').textContent = 'Вставьте один полный ключ EZText из сообщения бота.';
+    return;
+  }
+  currentKey = keys[0];
+  $('key').value = '';
+  $('status').textContent = 'Проверяем ключ…';
+  refresh();
+};
+$('logout').onclick = () => {
+  generation++;
+  currentKey = '';
+  $('status').textContent = '';
+  $('image').value = '';
+  updateExample();
+  show(false);
+};
+$('refresh').onclick = refresh;
+$('ocr').onsubmit = async event => {
+  event.preventDefault();
+  const file = $('image').files[0];
+  if (!currentKey || !file) return;
+  if (file.size > 5*1024*1024) {
+    $('ocr-status').textContent = 'Файл больше 5 МБ.';
+    return;
+  }
+  const active = generation;
+  const button = event.submitter;
+  button.disabled = true;
+  $('ocr-result').hidden = true;
+  $('ocr-status').textContent = 'Распознаём…';
+  try {
+    const form = new FormData();
+    form.append('image', file);
+    const result = await api('v1/ocr?'+new URLSearchParams({lang:$('language').value}), currentKey, {
+      method:'POST', body:form,
+    });
+    if (active !== generation) return;
+    $('ocr-result').textContent = result.text || 'Текст не найден.';
+    $('ocr-result').hidden = false;
+    $('ocr-status').textContent = 'Готово';
+  } catch (error) {
+    if (active === generation) $('ocr-status').textContent = error.message;
+  } finally {
+    button.disabled = false;
+    if (active === generation) refresh();
+  }
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,743 @@
+<!doctype html>
+<html lang="ru">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data: 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
+<link rel="icon" href="/favicon.ico?v=6" sizes="16x16 32x32 48x48 64x64">
+<link rel="icon" href="/favicon.svg?v=6" type="image/svg+xml" sizes="any">
+<link rel="icon" href="/dashboard/favicon.png?v=6" type="image/png" sizes="48x48">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=6">
+<title>EZText · Интерактивный снимок</title>
+<style>
+:root{color-scheme:dark;font:16px -apple-system,BlinkMacSystemFont,system-ui,sans-serif;background:#111419;color:#eef2f6}
+*{box-sizing:border-box}
+body{margin:0;padding:clamp(14px,4vw,46px)}
+main{max-width:1440px;margin:auto}
+header{display:flex;align-items:center;gap:13px;margin-bottom:20px}
+.brand{width:42px;height:42px;flex:0 0 42px;display:grid;place-items:center;border-radius:12px;background:#8ce9cf;color:#122b26;font-weight:800}
+.workspace{min-width:0}
+.searchbar{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:6px;margin-bottom:8px}
+.searchbar input{font:inherit;color:inherit;background:#1a2029;border:1px solid #455166;border-radius:9px;padding:8px 10px;min-width:0}
+.searchbar button{min-width:39px}
+#search-summary{font-size:13px;color:#aeb9c7;min-height:19px;margin:0 0 10px}
+.hot[data-match]{border-color:#f199ff}
+.hot[data-current]{outline:2px solid #f199ff;outline-offset:2px}
+#selection:focus,.searchbar input:focus{outline:2px solid #8ce9cf;outline-offset:1px}
+h1{font-size:clamp(25px,5vw,42px);letter-spacing:-.055em;margin:0}
+p{color:#aeb9c7;margin:9px 0 0;line-height:1.45}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(265px,29%);gap:16px;align-items:start}
+.panel,.viewport{background:#1a2029;border:1px solid #303946;border-radius:16px}
+.viewport{overflow:auto;padding:12px}
+.frame{position:relative;width:100%;min-width:var(--image-width);isolation:isolate;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.frame.marquee-mode{touch-action:none;cursor:crosshair}
+.marquee{position:absolute;pointer-events:none;z-index:2;border:1px dashed #ffcf72;background:transparent;border-radius:4px}
+.hot[data-preview]{border-color:#ffcf72;background:transparent}
+.frame img{display:block;width:100%;border-radius:8px;pointer-events:none;-webkit-user-drag:none;-webkit-user-select:none;user-select:none}
+.frame::selection,.frame *::selection{background:transparent}
+.frame button{-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;background:#293240;border:1px solid #455166;border-radius:9px;padding:9px 11px;cursor:pointer}
+button:hover,button:focus-visible{border-color:#82e8d0}
+button:disabled{opacity:.45;cursor:default}
+.hot{position:absolute;min-width:12px;min-height:12px;padding:0;border:1px solid #5df0cc;border-radius:4px;background:transparent}
+.hot[aria-pressed=true]{border:2px solid #ffcf72;background:transparent}
+.word-hot{border-style:dashed}
+.hot:focus-visible{outline:3px solid white;z-index:1}
+.panel{padding:16px;position:sticky;top:12px}
+h2{font-size:16px;margin:0 0 12px}
+textarea{width:100%;min-height:112px;resize:vertical;border:1px solid #455166;border-radius:9px;background:#111419;color:#eef2f6;padding:10px;font:inherit}
+.actions,.words,.tools{display:flex;flex-wrap:wrap;gap:7px}
+.actions{margin-top:10px}
+.tools{margin-bottom:10px}
+.tools button{padding:5px 10px}
+.tools [aria-pressed=true]{background:#8ce9cf;color:#0b2521;border-color:#8ce9cf}
+.primary{background:#8ce9cf;color:#0b2521;border-color:#8ce9cf;font-weight:650}
+.words button[aria-pressed=true]{background:#ffcf72;color:#251900;border-color:#ffcf72}
+#word-panel,#quick-panel{border-top:1px solid #303946;padding-top:14px;margin-top:16px}
+#status{font-size:13px;min-height:20px}
+#quick-items{display:grid;gap:6px}
+.quick-item{text-align:left;display:grid;gap:6px;overflow-wrap:anywhere;padding:9px;border:1px solid #303946;border-radius:10px}
+.quick-actions{display:flex;flex-wrap:wrap;gap:6px}
+.quick-actions button,.quick-action{padding:6px 9px;font-size:14px}
+.quick-action{display:inline-flex;align-items:center;border:1px solid #455166;border-radius:9px;background:#293240;color:#8ce9cf;text-decoration:none}
+.quick-action:hover,.quick-action:focus-visible{border-color:#82e8d0}
+.quick-type{font-size:12px;color:#8ce9cf}
+@media(max-width:760px){.layout{grid-template-columns:1fr}.panel{position:static}}
+
+:root{color-scheme:light;background:#f3f4f8;color:#181c31;--muted:#566079;--line:#dce0ea;--purple:#4b368e;--mint:#b2f5d5;--night:#15132d}
+[hidden]{display:none!important}
+header{isolation:isolate;position:relative;overflow:hidden;background:radial-gradient(ellipse at 95% 0%,#45376e,transparent 64%),var(--night);color:#fff;border-radius:17px;padding:18px 20px;margin-bottom:16px}
+header p{color:#ddd7ee;margin-top:4px;font-size:14px}
+.brand{background:var(--mint);color:var(--night);font-size:25px}
+p,#search-summary{color:var(--muted)}
+#search-summary:empty,#status:empty{display:none}
+#search-summary:not(:empty){margin:8px 0}
+.panel,.viewport{background:white;border-color:var(--line);box-shadow:0 3px 12px #26234a08}
+.viewport{padding:8px;overscroll-behavior-x:contain}
+.searchbar input,textarea,button,.quick-action{background:#f6f7fb;color:#181c31;border-color:#cdd2e0}
+button:hover,button:focus-visible,.quick-action:hover,.quick-action:focus-visible{border-color:#856ed2}
+#selection:focus,.searchbar input:focus{outline-color:#856ed2}
+.tools{align-items:center}
+.tools button,.searchbar button{min-height:40px}
+.tools [aria-pressed=true],.primary{background:var(--purple);color:#fff;border-color:var(--purple)}
+#modes{display:inline-flex;gap:3px;padding:3px;border:1px solid var(--line);background:white;border-radius:12px}
+#modes button{border-color:transparent}
+.hot{background:transparent;border-color:#42dcb4;box-shadow:0 0 0 1px #10293d99}
+.hot[data-preview],.hot[aria-pressed=true]{background:transparent}
+.hot[aria-pressed=true]{border-color:#ffc561}
+.quick-action,.quick-type{color:var(--purple)}
+#word-panel,#quick-panel,.quick-item{border-color:var(--line)}
+#status:not(:empty){padding:8px 11px;border-radius:8px;background:#e5f7eb;color:#174a32;margin-top:9px}
+@media(max-width:760px){
+ body{padding:10px 10px 24px}
+ header{padding:12px 13px;margin-bottom:10px;border-radius:13px}
+ .brand{width:36px;height:36px;flex-basis:36px}
+ header p{font-size:13px}
+ .layout{gap:10px}
+ .tools{gap:5px;margin-bottom:7px}
+ .tools button,.searchbar button,.actions button{min-height:44px}
+ .tools button{padding-inline:8px;font-size:14px}
+ #modes button{min-height:38px}
+ .searchbar input{font-size:16px}
+ .viewport{padding:4px;border-radius:11px}
+ .panel{padding:12px}
+ textarea{min-height:68px}
+ #status:not(:empty){position:fixed;bottom:calc(12px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:max-content;max-width:calc(100% - 24px);z-index:5;margin:0;box-shadow:0 3px 18px #15132d33;pointer-events:none}
+}
+@media(pointer:coarse){.hot{min-width:0;min-height:0}}
+
+.workspace-tools{border:1px solid var(--line);background:#fff;border-radius:14px;padding:8px;margin-bottom:9px}
+.workspace-tools .tools{margin:0;gap:5px}
+.zoom-tools{display:flex;gap:4px;margin-left:auto}
+.zoom-tools button,#marquee-mode{min-width:39px;font-size:17px;font-weight:700}
+.search-tools{margin-top:6px;border-top:1px solid var(--line)}
+.search-tools summary{cursor:pointer;padding:9px 5px 1px;color:var(--purple);font-size:14px;font-weight:650}
+.search-tools[open] summary{margin-bottom:8px}
+.search-tools .searchbar{margin-bottom:0}
+.panel h2{font-size:18px;letter-spacing:-.025em}
+#selection{resize:vertical;background:#f8f7fc;border-color:#ddd8eb}
+#selection:not(:placeholder-shown){background:#f1ecfa;color:#36276b;border-color:#c7b8e5}
+.actions{display:grid;grid-template-columns:1.2fr 1fr}
+.edit-actions{display:flex;justify-content:flex-end;gap:5px;margin-top:7px}
+.edit-actions button{background:transparent;border-color:transparent;color:var(--purple);font-size:13px}
+#launch-status{padding:15px;border:1px solid var(--line);border-radius:12px;background:white}
+@media(max-width:760px){
+ header{background:linear-gradient(120deg,#15132d,#30254c)}
+ .workspace-tools{padding:6px}
+ .workspace-tools .tools{gap:4px}
+ .zoom-tools{gap:3px}
+ .zoom-tools button,#marquee-mode{min-width:36px;padding-inline:5px}
+ #modes{gap:2px;padding:2px}
+ #modes button{padding-inline:7px}
+ .viewport{padding:3px}
+ .actions button,.edit-actions button{min-height:44px}
+}
+
+.viewport{touch-action:pan-x pan-y}
+.frame{min-width:0;width:var(--image-width,100%)}
+@media(max-width:760px){
+ .layout{padding-bottom:var(--dock-height,150px)}
+ .viewport{max-height:72dvh;overscroll-behavior:contain}
+ .copy-dock{position:fixed;bottom:0;left:0;right:0;z-index:4;background:white;border-top:1px solid var(--line);box-shadow:0 -6px 24px #15132d20;padding:10px 12px calc(10px + env(safe-area-inset-bottom))}
+ .copy-dock h2{font-size:14px;margin:0 0 5px}
+ .copy-dock #selection{min-height:38px;height:42px;resize:none;padding:7px 9px}
+ .copy-dock .actions{margin-top:5px}
+ #status:not(:empty){bottom:calc(var(--dock-height,150px) + 8px)}
+}
+.search-highlight{position:absolute;z-index:1;pointer-events:none;box-sizing:border-box;border:1px solid #9333ea;background:#c084fc44;border-radius:3px}
+.search-highlight.current{outline:2px solid #6b21a8;outline-offset:1px;background:#c084fc66}
+</style>
+<main>
+<header><img class="brand" src="/favicon.svg?v=6" alt="" width="42" height="42"><div><h1>EZText</h1><p>Нажимайте на рамки, чтобы собрать нужный текст.</p></div></header>
+<div class="layout">
+<section class="workspace" aria-label="Снимок">
+<div class="workspace-tools">
+<div class="tools">
+<span id="modes" hidden>
+<button type="button" id="words-mode" aria-pressed="false">Слова</button>
+<button type="button" id="lines-mode" aria-pressed="false">Строки</button>
+</span>
+<div class="zoom-tools" role="group" aria-label="Масштаб снимка">
+<button type="button" id="smaller" aria-label="Уменьшить">−</button>
+<button type="button" id="larger" aria-label="Увеличить">+</button>
+<button type="button" id="fit" aria-label="Вписать снимок">↔</button>
+</div>
+<button type="button" id="marquee-mode" aria-pressed="false" aria-label="Выбрать прямоугольником">▧</button>
+</div>
+<details class="search-tools">
+<summary>Найти на снимке</summary>
+<div class="searchbar" role="search">
+<input type="search" id="find-text" aria-label="Найти букву, слово или фразу" placeholder="Буква, слово или фраза" maxlength="200">
+<button type="button" id="find-prev" aria-label="Предыдущее совпадение" disabled>↑</button>
+<button type="button" id="find-next" aria-label="Следующее совпадение" disabled>↓</button>
+</div>
+<div id="search-summary" role="status"></div>
+</details>
+</div>
+<div class="viewport"><div class="frame"><img alt="Снимок с распознанными строками" draggable="false"><div class="marquee" hidden></div></div></div>
+</section>
+<section class="panel" aria-label="Выбранный текст">
+<div class="copy-dock">
+<h2 id="count">Выбранный текст</h2>
+<textarea readonly id="selection" aria-label="Выбранный текст" placeholder="Коснитесь слова на фото"></textarea>
+<div class="actions"><button type="button" id="copy" class="primary" disabled>Скопировать</button><button type="button" id="copy-all">Весь текст</button></div>
+</div>
+<div class="edit-actions"><button type="button" id="undo" disabled>Отменить</button><button type="button" id="clear" disabled>Очистить</button></div>
+<div id="status" role="status"></div>
+<section id="quick-panel" hidden aria-label="Ссылки и контакты">
+<h2>Ссылки и контакты</h2><div id="quick-items"></div>
+</section>
+<textarea id="quick-manual" readonly hidden aria-label="Текст для копирования вручную"></textarea>
+<div id="word-panel" hidden><h2>Слова в последней строке</h2><div class="words"></div></div>
+</section>
+</div>
+</main>
+<script type="application/json" id="scan-data">@@SCAN_DATA@@</script>
+<script>
+const {image, lines, width, height} = JSON.parse(document.querySelector('#scan-data').textContent);
+const $ = selector => document.querySelector(selector);
+const frame = $('.frame');
+frame.querySelector('img').src = image;
+const selection = $('#selection');
+const chosen = new Map();
+const history = [];
+const plainText = lines.map(line => line.text).join('\n');
+const words = lines.map(({text}) => text.match(/\S+/gu) || []);
+let active = null;
+let zoom = 1;
+let wordMode = false;
+const instant = Boolean(window.Telegram?.WebApp?.initData);
+function hotspot(text, [x1,y1,x2,y2], label, handler, isWord=false) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = isWord ? 'hot word-hot' : 'hot';
+  button.title = text;
+  button.setAttribute('aria-label', label);
+  button.style.left = `${x1 / width * 100}%`;
+  button.style.top = `${y1 / height * 100}%`;
+  button.style.width = `${(x2 - x1) / width * 100}%`;
+  button.style.height = `${(y2 - y1) / height * 100}%`;
+  button.onclick = handler;
+  frame.append(button);
+  return button;
+}
+function rememberSelection() {
+  history.push({active, rows: [...chosen].map(([index, set]) => [index, [...set]])});
+  if (history.length > 25) history.shift();
+}
+function undoSelection() {
+  const previous = history.pop();
+  if (!previous) return;
+  chosen.clear();
+  for (const [index, positions] of previous.rows) chosen.set(index, new Set(positions));
+  active = previous.active;
+  render();
+}
+function selectTarget(index, wordIndex, toggle=false) {
+  const picked = chosen.get(index) || new Set();
+  if (wordIndex === undefined) {
+    if (toggle && picked.size === words[index].length) chosen.delete(index);
+    else chosen.set(index, new Set(words[index].keys()));
+  } else {
+    if (toggle && picked.has(wordIndex)) picked.delete(wordIndex);
+    else picked.add(wordIndex);
+    if (picked.size) chosen.set(index, picked);
+    else chosen.delete(index);
+  }
+  active = index;
+}
+function pick(index, wordIndex, additive=false) {
+  if (suppressClick) return;
+  rememberSelection();
+  if (instant && !additive) chosen.clear();
+  selectTarget(index, wordIndex, additive || !instant);
+  render();
+  if (instant && !additive) copySelection();
+}
+const hotspots = lines.map(({text, box}, index) => ({
+  index, box, button: hotspot(text, box, `Строка ${index + 1}: ${text}`,
+    event => pick(index, undefined, event.metaKey || event.ctrlKey)),
+}));
+const wordHotspots = lines.flatMap(({word_boxes = []}, index) =>
+  word_boxes.flatMap((box, wordIndex) => box && words[index][wordIndex]
+    ? [{index, wordIndex, box, button: hotspot(words[index][wordIndex], box,
+       `Слово: ${words[index][wordIndex]}`,
+       event => pick(index, wordIndex, event.metaKey || event.ctrlKey), true)}] : []));
+const allTargets = [...hotspots, ...wordHotspots];
+frame.addEventListener('click', event => {
+  if (!wordMode || marqueeMode || suppressClick || event.target.closest('.hot')
+      || !window.matchMedia('(pointer: coarse)').matches) return;
+  const bounds = frame.getBoundingClientRect();
+  const x = event.clientX - bounds.left;
+  const y = event.clientY - bounds.top;
+  let closest = null;
+  let distance = 10;
+  for (const target of wordHotspots) {
+    const [x1,y1,x2,y2] = target.box;
+    const horizontal = Math.max(x1 / width * bounds.width - x, x - x2 / width * bounds.width, 0);
+    const vertical = Math.max(y1 / height * bounds.height - y, y - y2 / height * bounds.height, 0);
+    const gap = Math.hypot(horizontal, vertical);
+    if (gap < distance) {
+      distance = gap;
+      closest = target;
+    }
+  }
+  if (closest) pick(closest.index, closest.wordIndex);
+});
+
+let gesture = null;
+let suppressClick = false;
+let marqueeMode = false;
+const marquee = $('.marquee');
+$('#marquee-mode').onclick = () => {
+  marqueeMode = !marqueeMode;
+  $('#marquee-mode').setAttribute('aria-pressed', marqueeMode);
+  frame.classList.toggle('marquee-mode', marqueeMode);
+};
+function selectionRect(event) {
+  const bounds = frame.getBoundingClientRect();
+  return [
+    Math.max(0, Math.min(gesture.x, event.clientX) - bounds.left),
+    Math.max(0, Math.min(gesture.y, event.clientY) - bounds.top),
+    Math.min(bounds.width, Math.max(gesture.x, event.clientX) - bounds.left),
+    Math.min(bounds.height, Math.max(gesture.y, event.clientY) - bounds.top),
+  ];
+}
+function targetsIn(rect) {
+  const bounds = frame.getBoundingClientRect();
+  const [x0,y0,x1,y1] = rect;
+  if (bounds.width <= 0 || bounds.height <= 0) return [];
+  const left = x0 / bounds.width * width;
+  const top = y0 / bounds.height * height;
+  const right = x1 / bounds.width * width;
+  const bottom = y1 / bounds.height * height;
+  return (wordMode ? wordHotspots : hotspots).filter(({box: [a,b,c,d]}) =>
+    a < right && c > left && b < bottom && d > top);
+}
+frame.addEventListener('pointerdown', event => {
+  if (!event.isPrimary || event.button !== 0) return;
+  suppressClick = false;
+  if (event.pointerType === 'touch' && !marqueeMode) return;
+  gesture = {id:event.pointerId, x:event.clientX, y:event.clientY, dragged:false,
+             additive:event.metaKey || event.ctrlKey, origin:event.target.closest('.hot')};
+});
+frame.addEventListener('pointermove', event => {
+  if (!gesture || gesture.id !== event.pointerId) return;
+  if (!gesture.dragged && Math.hypot(event.clientX - gesture.x, event.clientY - gesture.y) < 5) return;
+  if (!gesture.dragged) {
+    gesture.dragged = true;
+    frame.setPointerCapture(event.pointerId);
+  }
+  const rect = selectionRect(event);
+  const [left,top,right,bottom] = rect;
+  Object.assign(marquee.style, {left:left+'px', top:top+'px',
+    width:(right-left)+'px', height:(bottom-top)+'px'});
+  marquee.hidden = false;
+  const hovered = new Set(targetsIn(rect));
+  allTargets.forEach(target => target.button.toggleAttribute('data-preview', hovered.has(target)));
+});
+function finishGesture(event, cancelled=false) {
+  if (!gesture || gesture.id !== event.pointerId) return;
+  const {dragged, additive, origin} = gesture;
+  const selected = dragged && !cancelled ? targetsIn(selectionRect(event)) : [];
+  gesture = null;
+  marquee.hidden = true;
+  allTargets.forEach(({button}) => button.removeAttribute('data-preview'));
+  if (cancelled) return;
+  if (dragged) {
+    suppressClick = true;
+    rememberSelection();
+    if (!additive) chosen.clear();
+    selected.forEach(({index,wordIndex}) => selectTarget(index, wordIndex));
+    active = selected.at(-1)?.index ?? null;
+    render();
+  } else if (additive && origin) {
+    const target = allTargets.find(({button}) => button === origin);
+    if (target) pick(target.index, target.wordIndex, true);
+    suppressClick = true;
+  }
+  if (suppressClick) setTimeout(() => {suppressClick = false;}, 0);
+}
+window.addEventListener('pointerup', event => finishGesture(event));
+window.addEventListener('pointercancel', event => finishGesture(event, true));
+frame.addEventListener('contextmenu', event => {
+  if (event.ctrlKey && event.target.closest('.hot')) event.preventDefault();
+});
+function setMode(enabled) {
+  wordMode = enabled && wordHotspots.length > 0;
+  hotspots.forEach(({button}) => {button.hidden = wordMode;});
+  wordHotspots.forEach(({button}) => {button.hidden = !wordMode;});
+  $('#lines-mode').setAttribute('aria-pressed', !wordMode);
+  $('#words-mode').setAttribute('aria-pressed', wordMode);
+}
+if (wordHotspots.length) {
+  $('#modes').hidden = false;
+  $('#lines-mode').onclick = () => {setMode(false); render();};
+  $('#words-mode').onclick = () => {setMode(true); render();};
+}
+setMode(true);
+if (instant) document.querySelector('header p').textContent =
+  'Нажмите, чтобы скопировать. Для выбора нескольких протяните рамку или удерживайте ⌘ / Ctrl.';
+let matches = [];
+let currentMatch = -1;
+let searchTimer;
+let pendingSearch;
+function showMatches(message) {
+  matches.forEach((element, index) => element.classList.toggle('current', index === currentMatch));
+  $('#find-prev').disabled = matches.length < 2;
+  $('#find-next').disabled = matches.length < 2;
+  $('#search-summary').textContent = message ?? (matches.length
+    ? (currentMatch + 1) + ' из ' + matches.length : 'Совпадений нет');
+}
+function search(step) {
+  if (!matches.length) return;
+  currentMatch = (currentMatch + step + matches.length) % matches.length;
+  showMatches();
+  matches[currentMatch].scrollIntoView({block:'nearest',inline:'nearest'});
+}
+function scheduleSearch() {
+  clearTimeout(searchTimer);
+  pendingSearch?.abort();
+  for (const match of matches) match.remove();
+  matches = [];
+  currentMatch = -1;
+  const query = $('#find-text').value.trim();
+  showMatches(query ? 'Ищем…' : '');
+  if (!query) return;
+  const controller = new AbortController();
+  pendingSearch = controller;
+  searchTimer = setTimeout(async () => {
+    try {
+      const boxes = typeof searchSnapshot === 'function'
+        ? await searchSnapshot(query, controller.signal)
+        : lines.filter(({text}) => text.toLowerCase().includes(query.toLowerCase())).map(({box}) => box);
+      if (controller.signal.aborted) return;
+      matches = boxes.map(([left, top, right, bottom]) => {
+        const mark = document.createElement('span');
+        mark.className = 'search-highlight';
+        mark.setAttribute('aria-hidden', 'true');
+        mark.style.left = (left / width * 100) + '%';
+        mark.style.top = (top / height * 100) + '%';
+        mark.style.width = ((right - left) / width * 100) + '%';
+        mark.style.height = ((bottom - top) / height * 100) + '%';
+        return mark;
+      });
+      frame.append(...matches);
+      currentMatch = matches.length ? 0 : -1;
+      showMatches();
+    } catch {
+      if (!controller.signal.aborted) showMatches('Поиск недоступен. Попробуйте ещё раз.');
+    }
+  }, 180);
+}
+$('#find-text').oninput = scheduleSearch;
+$('#find-text').onkeydown = event => {
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    search(event.shiftKey ? -1 : 1);
+  }
+};
+$('#find-next').onclick = () => search(1);
+$('#find-prev').onclick = () => search(-1);
+function render() {
+  for (const {button,index,wordIndex} of allTargets) {
+    const picked = chosen.get(index);
+    button.setAttribute('aria-pressed', wordIndex === undefined ? Boolean(picked) : (picked?.has(wordIndex) || false));
+  }
+  selection.value = [...chosen.keys()].sort((a,b) => a-b).map(index => {
+    const selected = chosen.get(index);
+    return selected.size === words[index].length
+      ? lines[index].text
+      : words[index].filter((_, position) => selected.has(position)).join(' ');
+  }).join('\n');
+  const count = wordMode ? [...chosen.values()].reduce((sum, set) => sum + set.size, 0) : chosen.size;
+  $('#count').textContent = count ? (wordMode ? 'Выбрано слов: ' : 'Выбрано строк: ') + count : 'Выбранный текст';
+  $('#copy').disabled = $('#clear').disabled = !selection.value;
+  $('#undo').disabled = history.length === 0;
+  $('#status').textContent = '';
+  const wordPanel = $('#word-panel');
+  wordPanel.hidden = active === null;
+  const controls = $('.words');
+  controls.replaceChildren();
+  if (active === null) return;
+  words[active].forEach((word, index) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = word;
+    button.setAttribute('aria-pressed', chosen.get(active)?.has(index) || false);
+    button.onclick = () => {
+      rememberSelection();
+      const picked = chosen.get(active) || new Set();
+      if (picked.has(index)) picked.delete(index);
+      else picked.add(index);
+      if (picked.size) chosen.set(active, picked);
+      else chosen.delete(active);
+      render();
+      controls.children[index]?.focus();
+    };
+    controls.append(button);
+  });
+}
+const viewport = $('.viewport');
+const dock = $('.copy-dock');
+new ResizeObserver(() => {
+  document.documentElement.style.setProperty('--dock-height', dock.offsetHeight + 'px');
+}).observe(dock);
+
+function setZoom(value, origin, destination = origin) {
+  const bounds = frame.getBoundingClientRect();
+  zoom = Math.min(4, Math.max(1, value));
+  frame.style.setProperty('--image-width', `${zoom * 100}%`);
+  if (origin && bounds.width && bounds.height) {
+    const scaled = frame.getBoundingClientRect();
+    viewport.scrollLeft += scaled.left + (origin.x - bounds.left) * scaled.width / bounds.width - destination.x;
+    viewport.scrollTop += scaled.top + (origin.y - bounds.top) * scaled.height / bounds.height - destination.y;
+  }
+  $('#smaller').disabled = zoom <= 1;
+  $('#larger').disabled = zoom >= 4;
+}
+$('#smaller').onclick = () => setZoom(zoom - .5);
+$('#larger').onclick = () => setZoom(zoom + .5);
+$('#fit').onclick = () => {
+  setZoom(1);
+  viewport.scrollTo(0, 0);
+};
+
+function touchPair(touches) {
+  const [a,b] = touches;
+  return {
+    distance: Math.max(1, Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY)),
+    point: {x:(a.clientX + b.clientX) / 2, y:(a.clientY + b.clientY) / 2},
+  };
+}
+const wordsByButton = new Map(wordHotspots.map(target => [target.button, target]));
+let sweep = null;
+function endSweep() {
+  if (!sweep) return false;
+  clearTimeout(sweep.timer);
+  cancelAnimationFrame(sweep.scrollFrame);
+  const active = sweep.active;
+  sweep = null;
+  return active;
+}
+function sweepTo(touch) {
+  const dx = touch.clientX - sweep.x;
+  const dy = touch.clientY - sweep.y;
+  const steps = Math.max(1, Math.ceil(Math.hypot(dx, dy) / 5));
+  let changed = false;
+  for (let i = 1; i <= steps; i++) {
+    const button = document.elementFromPoint(sweep.x + dx * i / steps, sweep.y + dy * i / steps);
+    const target = wordsByButton.get(button);
+    if (target && !chosen.get(target.index)?.has(target.wordIndex)) {
+      selectTarget(target.index, target.wordIndex);
+      changed = true;
+    }
+  }
+  sweep.x = touch.clientX;
+  sweep.y = touch.clientY;
+  if (changed) render();
+}
+function edgeSpeed(position, low, high) {
+  const band = Math.min(44, (high - low) / 3);
+  if (band <= 0) return 0;
+  if (position < low + band) return -Math.min(1, (low + band - position) / band);
+  if (position > high - band) return Math.min(1, (position - high + band) / band);
+  return 0;
+}
+function scrollSweep(timestamp) {
+  if (!sweep?.active) return;
+  const bounds = viewport.getBoundingClientRect();
+  const left = Math.max(0, bounds.left);
+  const right = Math.min(innerWidth, bounds.right);
+  const top = Math.max(0, bounds.top);
+  const bottom = Math.min(innerHeight, bounds.bottom, dock.getBoundingClientRect().top);
+  const {finger} = sweep;
+  const elapsed = sweep.scrollTime ? Math.min(32, timestamp - sweep.scrollTime) : 16;
+  sweep.scrollTime = timestamp;
+  if (right > left && bottom > top) {
+    const dx = edgeSpeed(finger.clientX, left, right) * elapsed * .48;
+    const dy = edgeSpeed(finger.clientY, top, bottom) * elapsed * .48;
+    if (dx || dy) {
+      const oldX = viewport.scrollLeft;
+      const oldY = viewport.scrollTop;
+      viewport.scrollLeft += dx;
+      viewport.scrollTop += dy;
+      const movedX = viewport.scrollLeft - oldX;
+      const movedY = viewport.scrollTop - oldY;
+      if (movedX || movedY) {
+        const clientX = Math.max(left + 2, Math.min(right - 2, finger.clientX));
+        const clientY = Math.max(top + 2, Math.min(bottom - 2, finger.clientY));
+        sweep.x = clientX - movedX;
+        sweep.y = clientY - movedY;
+        sweepTo({clientX, clientY});
+      }
+    }
+  }
+  sweep.scrollFrame = requestAnimationFrame(scrollSweep);
+}
+let pinch = null;
+viewport.addEventListener('touchstart', event => {
+  if (event.touches.length === 1 && wordMode && !marqueeMode && !pinch) {
+    const target = wordsByButton.get(event.target.closest('.word-hot'));
+    if (!target) return;
+    const touch = event.touches[0];
+    const start = {x:touch.clientX, y:touch.clientY, finger:touch, active:false};
+    sweep = start;
+    start.timer = setTimeout(() => {
+      if (sweep !== start) return;
+      rememberSelection();
+      start.active = true;
+      suppressClick = true;
+      selectTarget(target.index, target.wordIndex);
+      render();
+      $('#status').textContent = 'Проведите по другим словам';
+      start.scrollFrame = requestAnimationFrame(scrollSweep);
+    }, 360);
+    return;
+  }
+  endSweep();
+  if (event.touches.length !== 2 || pinch) return;
+  if (gesture) finishGesture({pointerId:gesture.id}, true);
+  suppressClick = true;
+  pinch = touchPair(event.touches);
+  if (event.cancelable) event.preventDefault();
+}, {passive:false});
+viewport.addEventListener('touchmove', event => {
+  if (pinch && event.touches.length === 2) {
+    if (event.cancelable) event.preventDefault();
+    const next = touchPair(event.touches);
+    setZoom(zoom * next.distance / pinch.distance, pinch.point, next.point);
+    pinch = next;
+    return;
+  }
+  if (!sweep || event.touches.length !== 1) return;
+  const touch = event.touches[0];
+  if (sweep.active) {
+    if (event.cancelable) event.preventDefault();
+    sweep.finger = touch;
+    sweepTo(touch);
+  } else if (Math.hypot(touch.clientX - sweep.x, touch.clientY - sweep.y) > 8) {
+    endSweep();
+  }
+}, {passive:false});
+for (const name of ['touchend','touchcancel']) {
+  viewport.addEventListener(name, event => {
+    if (endSweep() && event.cancelable) event.preventDefault();
+    if (event.touches.length < 2) pinch = null;
+  }, {passive:false});
+}
+viewport.addEventListener('contextmenu', event => {
+  if (sweep || (wordMode && matchMedia('(pointer: coarse)').matches && event.target.closest('.word-hot'))) {
+    event.preventDefault();
+  }
+});
+$('#undo').onclick = undoSelection;
+$('#clear').onclick = () => { rememberSelection(); chosen.clear(); active = null; render(); };
+function contactAction(type, value) {
+  if (type === 'Телефон') {
+    const number = (value.startsWith('+') ? '+' : '') + value.replace(/\D/g, '');
+    return {label:'Позвонить', href:'tel:' + number};
+  }
+  if (type === 'Почта') {
+    return {label:'Написать', href:'mailto:' + encodeURIComponent(value).replace('%40', '@')};
+  }
+  try {
+    const url = new URL(/^https?:\/\//i.test(value) ? value : 'https://' + value);
+    if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) return null;
+    const telegram = url.hostname === 't.me' && !url.port;
+    if (telegram) url.protocol = 'https:';
+    return {label:'Открыть', href:url.href, external:true, telegram};
+  } catch {
+    return null;
+  }
+}
+
+function quickItems() {
+  const entities = [];
+  const seen = new Set();
+  const pattern = /(?<email>[A-Z0-9.!#$%&'*+/=?^_\x60{|}~-]+@[A-Z0-9](?:[A-Z0-9.-]*[A-Z0-9])?\.[A-Z]{2,})|(?<link>(?:https?:\/\/|www\.|t\.me\/)[^\s<>"'«»]+)|(?<phone>(?<![\w+])(?:\+\d{1,3}[ .-]*|\d[ .-]+(?=\())(?:\(?\d{2,4}\)?[ .-]*)\d[\d .-]{5,}\d(?!\w))/giu;
+  for (const {text} of lines) {
+    for (const match of text.matchAll(pattern)) {
+      const type = match.groups.email ? 'Почта' : match.groups.link ? 'Ссылка' : 'Телефон';
+      const value = match[0].replace(/[.,;:!?\])}]+$/u, '');
+      const digits = type === 'Телефон' ? value.replace(/\D/g, '') : '';
+      if (type === 'Телефон' && (digits.length < 10 || digits.length > 15)) continue;
+      const key = digits || (type === 'Почта' ? value.toLowerCase() : value);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      entities.push({type, value});
+    }
+  }
+  const target = $('#quick-items');
+  for (const {type, value} of entities) {
+    const item = document.createElement('div');
+    item.className = 'quick-item';
+    const label = document.createElement('span');
+    label.className = 'quick-type';
+    label.textContent = type;
+    const address = document.createElement('span');
+    address.textContent = value;
+    const actions = document.createElement('div');
+    actions.className = 'quick-actions';
+    const action = contactAction(type, value);
+    if (action) {
+      const link = document.createElement('a');
+      link.className = 'quick-action';
+      link.textContent = action.label;
+      link.href = action.href;
+      link.setAttribute('aria-label', action.label + ': ' + value);
+      if (action.external) {
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.onclick = event => {
+          const app = window.Telegram?.WebApp;
+          if (!app?.initData) return;
+          try {
+            if (action.telegram && typeof app.openTelegramLink === 'function') app.openTelegramLink(action.href);
+            else if (typeof app.openLink === 'function') app.openLink(action.href);
+            else return;
+            event.preventDefault();
+          } catch {}
+        };
+      }
+      actions.append(link);
+    }
+    const copy = document.createElement('button');
+    copy.type = 'button';
+    copy.textContent = 'Копировать';
+    copy.setAttribute('aria-label', 'Скопировать · ' + type + ': ' + value);
+    copy.onclick = () => copyValue(value, $('#quick-manual'), type + ': скопировано');
+    actions.append(copy);
+    item.append(label, address, actions);
+    target.append(item);
+  }
+  $('#quick-panel').hidden = !entities.length;
+}
+async function copyValue(value, fallback, success) {
+  const manual = $('#quick-manual');
+  manual.hidden = true;
+  let copied = false;
+  try {
+    await navigator.clipboard.writeText(value);
+    copied = true;
+  } catch {
+    fallback.hidden = false;
+    fallback.value = value;
+    fallback.focus();
+    fallback.select();
+    try { copied = document.execCommand('copy'); } catch {}
+    if (copied) manual.hidden = true;
+  }
+  $('#status').textContent = copied ? success : 'Текст выделен. Скопируйте его в меню браузера.';
+  if (copied) window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred('success');
+}
+function copySelection() {
+  return copyValue(selection.value, selection, 'Текст скопирован');
+}
+$('#copy').onclick = copySelection;
+$('#copy-all').disabled = !plainText;
+$('#copy-all').onclick = () => copyValue(plainText, $('#quick-manual'), 'Весь текст скопирован');
+quickItems();
+setZoom(1);
+render();
+</script>
+</html>

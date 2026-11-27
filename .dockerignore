@@ -1,0 +1,12 @@
+.git
+.env
+.env.*
+*.env
+.venv
+data
+__pycache__
+*.sqlite*
+*.session*
+payment-api.json
+*.pem
+*.key

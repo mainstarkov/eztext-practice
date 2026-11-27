@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ru">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline' https://telegram.org; connect-src 'self'; form-action 'none'; base-uri 'none'">
+<title>TextScan · Настройка оплаты</title>
+<style>
+:root{font:16px system-ui;color-scheme:dark;background:#10201c;color:#edf5f1}
+body{margin:0;padding:22px}main{max-width:420px;margin:auto}
+h1{font-size:24px;margin:0 0 8px}p{color:#b3c8bf;margin-bottom:18px}
+form{display:grid;gap:12px}label{display:grid;gap:5px}input,button{font:inherit;padding:10px;border-radius:8px;border:1px solid #577669}
+button{background:#a4ebcd;color:#17342b;font-weight:700}
+[hidden]{display:none}
+</style>
+<main>
+<h1>Данные Telegram API</h1>
+<p>Вставьте данные своего приложения из API development tools.</p>
+<form id="settings" hidden>
+<label>App api_id<input name="api_id" inputmode="numeric" autocomplete="off" required></label>
+<label>App api_hash<input name="api_hash" type="password" autocomplete="off" required></label>
+<button>Сохранить на VPS</button>
+</form>
+<p id="status" role="status"></p>
+<button id="close" type="button" hidden>Вернуться в бот</button>
+</main>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script>
+const tg = window.Telegram?.WebApp;
+const status = document.querySelector('#status');
+const form = document.querySelector('#settings');
+const close = document.querySelector('#close');
+if (!tg?.initData) {
+  status.textContent = 'Откройте эту форму из /admin в TextScan.';
+} else {
+  tg.ready();
+  form.hidden = false;
+}
+form.onsubmit = async event => {
+  event.preventDefault();
+  const button = event.submitter;
+  button.disabled = true;
+  status.textContent = 'Сохраняем…';
+  try {
+    const data = Object.fromEntries(new FormData(form));
+    const response = await fetch(location.pathname, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({api_id:data.api_id.trim(), api_hash:data.api_hash.trim(), initData:tg.initData}),
+    });
+    if (response.ok) {
+      form.reset();
+      form.hidden = true;
+      close.hidden = false;
+      status.textContent = 'Сохранено на VPS. Вернитесь в бот, снова откройте /admin и нажмите «Подключить аккаунт по QR».';
+    } else {
+      status.textContent = ({
+        400:'Проверьте API ID и hash собственного приложения.',
+        403:'Войдите через личный чат администратора TextScan.',
+        409:'Сессия уже подключена или настройка недоступна.',
+      })[response.status] || 'Не удалось сохранить настройки.';
+    }
+  } catch {
+    status.textContent = 'Не удалось связаться с сервером.';
+  } finally {
+    button.disabled = false;
+  }
+};
+close.onclick = () => tg.close();
+</script>
+</html>
