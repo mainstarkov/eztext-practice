@@ -38,3 +38,20 @@ curl https://eztext.noip.at/api/v1/ocr \
 `GET /api/v1/balance` показывает остаток, а `GET /api/v1/history` возвращает общую историю API и Telegram. Интерактивные снимки доступны отправителю в течение 24 часов. На VPS можно настроить отдельную быструю модель для Telegram через `BOT_FAST_TESSDATA`. Подпись к фото «точно» выбирает основную OCR-модель, а «почерк» включает обработку рукописных заметок.
 
 Не добавляйте в Git токены, файлы окружения, базы, ключи или сессии Telegram.
+
+## Демо и адрес запуска
+
+[Открыть GitHub Pages](https://mainstarkov.github.io/eztext-practice/).
+
+API: http://127.0.0.1:8080. Мини-приложение: порт 8082.
+
+```sh
+python3 -m venv .venv
+. .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+set -a
+. ./.env
+set +a
+python main.py
+```
