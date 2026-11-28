@@ -1,5 +1,7 @@
 # EZText
 
+**[Открыть чат бота](https://mainstarkov.github.io/telegram-preview/?demo=ocr)**
+
 Распознавание русского и английского текста на фотографиях через Telegram, мини-приложение и HTTP API.
 
 [Открыть демо](https://mainstarkov.github.io/eztext-practice/)
